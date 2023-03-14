@@ -256,3 +256,270 @@ class PostController extend Controller
 Now the controller is clean and very handy to extend or readable. 
 
 In this principle, it is easy to understand the code cause every class has a single responsibility, so it can easy to debug or understand for other developers.
+
+
+
+
+
+## O — Open-Closed Principle
+The Open-Closed Principle suggests that classes should be open to extension and closed to modification. Sometimes, we need to add certain functions to the existing class to perform additional tasks. So, according to the Open-Closed Principle, We should add new functionality without touching the existing code for the class. This is because whenever we modify the existing code, we risk creating potential bugs. So we should avoid touching the tested and reliable (mostly) production code if possible. 
+
+For this reason, it is called open for extension (Add functionality) but closed for modification (Couldn't update any existing function) In simple words, this principle aims to extend a Class’s behavior without changing the existing behavior of that Class.
+
+For Example:
+If we have a project like calculate area then we can write the code like:
+
+
+```php
+<?php
+namespace App\Solid;
+class Rectengle
+{
+	public $width;
+	public $height;
+	public function __construct($width, $height)
+	{
+		$this->width = $width;
+		$this->height = $height;
+	}
+}
+```
+In the 1st principle, we learned that a class has a single responsibility, so we can extract another class for area calculator:
+
+```php
+<?php
+namespace App\Solid;
+class AreaCalculator
+{
+	public $width;
+	public $height;
+	public function totalArea(array $rectengles)
+	{
+		$area = 0;
+		foreach($rectengles as $rectengle) {
+			$area += $rectengle->width * $rectengle->height;
+		}
+		return $area;
+	}
+}
+```
+`web.php` for route
+```php
+Route::get('/', function(){
+	return (new AreaCalculator)->totalArea(new Rectengle(10,20));
+})
+```
+
+If we calculate the radius of a circle in that project:
+```php
+<?php
+namespace App\Solid;
+class Circle
+{
+	public $radius;
+	public function __construct($radius)
+	{
+		$this->radius = $radius;
+	}
+}
+```
+Now if we pass the Circle 
+```php
+Route::get('/', function(){
+	return (new AreaCalculator)->totalArea(new Circle(10));
+})
+```
+It is not going to work because the totalArea method is written only for rectangle. So we need to modify the method that is violating the 2nd principle.
+
+Instead of passing rectangle into the totalArea method of AreaCalculator class, we can change name shapes like;
+
+```php
+<?php
+namespace App\Solid;
+class AreaCalculator
+{
+	public $width;
+	public $height;
+	public function totalArea(array $shapes)
+	{
+		$area = 0;
+		foreach($shapes as $shape) {
+			if($shape instanceof Rectangle){
+				$area += $shape->width * $shape->height;
+			}
+			$area += $shape->radius * $shape->radius * pi();
+		}
+		return $area;
+	}
+}
+```
+
+We see that if we add another area calculator then we have to add another if condition that is violating the principle.
+
+#### So we can update the code like this:
+
+```php
+<?php
+namespace App\Solid;
+class Rectengle
+{
+	public $width;
+	public $height;
+	public function __construct($width, $height)
+	{
+		$this->width = $width;
+		$this->height = $height;
+	}
+	public function area()
+	{
+		return $this->width * $this->height;
+	}
+}
+```
+```php
+<?php
+namespace App\Solid;
+class Circle
+{
+	public $radius;
+	public function __construct($radius)
+	{
+		$this->radius = $radius;
+	}
+	public function area()
+	{
+		return $this->radius * $this->radius * pi();
+	}
+}
+```
+
+```php
+<?php
+namespace App\Solid;
+class AreaCalculator
+{
+	public $width;
+	public $height;
+	public function totalArea(array $shapes)
+	{
+		$area = 0;
+		foreach($shapes as $shape) {
+			$area += $shape->area()
+		}
+		return $area;
+	}
+}
+```
+It is not done yet. The open closed principle suggests that we should separate the instantiate behavior behind an interface.
+
+### Why we need interface
+if we add an another area calculator for triangle then we have to add another class like:
+```php
+<?php
+namespace App\Solid;
+class Triangle
+{
+	public $base;
+	public $height;
+	public function __construct($base, $height)
+	{
+		$this->base = $base;
+		$this->height = $height;
+	}
+	public function area()
+	{
+		return ($this->base * $this->height)/2;
+	}
+}
+```
+Let's say in the above class is added by other developer, and he doesn't know the code structure. He changes the method name like `getArea()` then the code runs error. In the `AreaCalculator` class `getArea()` method doesn't exist.
+
+That kind of problem is solved by the interface. Let's see.
+### Final code for open closed principle
+```php
+<?php
+namespace App\Solid;
+class ShapeInterface
+{
+	public function area();
+}
+```
+```php
+<?php
+namespace App\Solid;
+class Rectengle implements ShapeInterface
+{
+	public $width;
+	public $height;
+	public function __construct($width, $height)
+	{
+		$this->width = $width;
+		$this->height = $height;
+	}
+	public function area()
+	{
+		return $this->width * $this->height;
+	}
+}
+```
+```php
+<?php
+namespace App\Solid;
+class Circle implements ShapeInterface
+{
+	public $radius;
+	public function __construct($radius)
+	{
+		$this->radius = $radius;
+	}
+	public function area()
+	{
+		return $this->radius * $this->radius * pi();
+	}
+}
+```
+```php
+<?php
+namespace App\Solid;
+class Triangle implements ShapeInterface
+{
+	public $base;
+	public $height;
+	public function __construct($base, $height)
+	{
+		$this->base = $base;
+		$this->height = $height;
+	}
+	public function area()
+	{
+		return ($this->base * $this->height)/2;
+	}
+}
+```
+
+```php
+<?php
+namespace App\Solid;
+class AreaCalculator
+{
+	public $width;
+	public $height;
+	public function totalArea(ShapeInterface $shapes)
+	{
+		$area = 0;
+		foreach($shapes as $shape) {
+			$area += $shape->area()
+		}
+		return $area;
+	}
+}
+```
+```php
+Route::get('/', function(){
+	return (new AreaCalculator)->totalArea(
+		new Circle(10),
+		new Triangle(10, 20),
+		new Rectangle(10, 20)
+	);
+})
+```
