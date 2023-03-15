@@ -523,3 +523,194 @@ Route::get('/', function(){
 	);
 })
 ```
+
+
+This is an example of using open closed principle.
+
+Another example we can implement open closed principle is `PaymentService`. We have different types of payment service like `paypal`, `stripe` etc. Here we can make an interface like `PaymentMethodInterface` and declare a method like `makePayment()`. Then create different class for each payment method like `paypal`, `stripe` that implements `PaymentMethodInterface`. For this reason we have to implement method `makePayment()` in every payment class. Then we can pass the dependency injection into the `PaymentService` class and call `makePayment()` method.
+
+## Liskov substitution principle (LSP)
+The Liskov Substitution Principle (LSP) states that **objects of a superclass should be replaceable with objects of its subclasses without breaking the application**. 
+
+### Liskov substitution principle (LSP) rules.
+1. Parameter types must match in both child and parent classes
+2. Method return type must match
+3. Preconditions cannot be strengthened by the child's class
+4. Postconditions cannot be weakened in the child's class
+5. Exceptions thrown by the child method must be the same as from an exception thrown by the parent method.
+6. Invariants of a superclass must be preserved
+
+### Violation of Liskov substitution principle (LSP)
+There is a checklist to determine whether you are violating Liskov.
+
+Check list:
+- **Parameter types must match in both child and parent classes:**  When overriding a method, child class & parent class method must same parameter.
+- **Method return type must match:** When overriding a method, child class & parent class method must return same type.
+>For Example
+```php
+<?php
+interface Database 
+{
+    public function selectQuery(string $sql): array;
+}
+class SQLiteDatabase implements Database
+{
+    public function selectQuery(string $sql): array
+    {
+        // sqlite specific code
+        return $result;
+    }
+}
+
+class MySQLDatabase implements Database
+{
+    public function selectQuery(string $sql): array
+    {
+        // mysql specific code
+        return ['result' => $result]; // This violates LSP !
+    }
+}
+```
+-   **Preconditions cannot be strengthened by the child's class**: Assume your base class works with a member int. Now, your subtype requires that int to be positive. This is strengthened pre-conditions, and now any code that worked perfectly fine before with negative int is broken.
+>For Example
+
+**Violation:**
+```php
+<?php
+class AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{
+		// email configuration to send email
+	}
+}
+class XyzSendEmailService extends AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{
+		// precondition
+		if(!$to){ return; } // This is not allowed cause this condition is not present in the parent class
+		
+		// email configuration to send email
+	}
+}
+```
+**Validate:**
+```php
+<?php
+class AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{
+		// precondition
+		if(!$to){ return; }
+		// email configuration to send email
+	}
+}
+class XyzSendEmailService extends AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{
+		// precondition
+		if(!$to){ return; } // This is allowed cause this condition is present in the parent class
+		
+		// email configuration to send email
+	}
+}
+```
+
+-   **Post-conditions cannot be weakened**: Assume your base class required all connections to the database should be closed before the method returned. In your subclass, you overrode that method and left the connection open for further reuse. You have weakened the post-conditions of that method.
+
+>For Example
+
+**Violation:**
+```php
+<?php
+class AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{
+		// email configuration to send email
+		
+		// postcondition
+		if(!$isEmailNotSent){ return; } // This is not allowed cause this condition is not present in the child class
+	}
+}
+class XyzSendEmailService extends AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{	
+		// email configuration to send email
+	}
+}
+```
+**Validate:**
+```php
+<?php
+class AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{
+		// email configuration to send email
+		
+		// postcondition
+		if(!$isEmailNotSent){ return; } // This is allowed cause this condition is present in the child class
+	}
+}
+class XyzSendEmailService extends AbcSendEmailService
+{
+	public function sendEmail($to, $subject, $message)
+	{	
+		// email configuration to send email
+		
+		// postcondition
+		if(!$isEmailNotSent){ return; }
+	}
+}
+```
+
+-   **No new exceptions should be thrown in derived class**: If your base class threw ArgumentNullException then your subclasses were only allowed to throw exceptions of type ArgumentNullException or any exceptions derived from ArgumentNullException. Throwing IndexOutOfRangeException is a violation of Liskov.
+    
+-   **Invariants must be preserved**: The most difficult and painful constraint to fulfill. Invariants are sometimes hidden in the base class and the only way to reveal them is to read the code of the base class. Basically you have to be sure when you override a method anything unchangeable must remain unchanged after your overridden method is executed. The best thing I can think of is to enforce these invariant constraints in the base class but that would not be easy.
+>For Example
+
+```php
+<?php
+class AbcSendEmailService
+{
+	public $secretKey;
+	public function __construct($secretKey)
+	{
+		$this->secretKey = $secretKey; // This secret key must not change from child class or other methods
+	}
+	public function sendEmail($to, $subject, $message)
+	{
+		// Email config
+	}
+}
+```
+    
+-   **History Constraint**: When overriding a method you are not allowed to modify an unmodifiable property in the base class. Take a look at these code and you can see Name is defined to be unmodifiable (private set) but SubType introduces new method that allows modifying it (through reflection):
+    
+```php
+class SuperType
+{
+	public $name; 
+	public function getName()
+	{
+		return $this->name
+	}
+	private function setName($name){
+		return $this->name = $name;
+	}
+}
+class SubType extends SuperType
+{
+	public ChangeName($newName)
+	{
+		var propertyType = $this->setName($newName); 
+		// This is the violation of this rules. 
+		//We can't change the value of name from child class of a private set.
+	}
+} 
+```
