@@ -529,7 +529,7 @@ This is an example of using open closed principle.
 
 Another example we can implement open closed principle is `PaymentService`. We have different types of payment service like `paypal`, `stripe` etc. Here we can make an interface like `PaymentMethodInterface` and declare a method like `makePayment()`. Then create different class for each payment method like `paypal`, `stripe` that implements `PaymentMethodInterface`. For this reason we have to implement method `makePayment()` in every payment class. Then we can pass the dependency injection into the `PaymentService` class and call `makePayment()` method.
 
-## Liskov substitution principle (LSP)
+## L — Liskov substitution principle (LSP)
 The Liskov Substitution Principle (LSP) states that **objects of a superclass should be replaceable with objects of its subclasses without breaking the application**. 
 
 ### Liskov substitution principle (LSP) rules.
@@ -716,7 +716,7 @@ class SubType extends SuperType
 ```
 
 
-## Interface Segregation
+## I — Interface Segregation
 
 Segregation means keeping things separated, and the Interface Segregation Principle is about separating the interfaces. The principle emphasizes having one general-purpose interface rather than many client-specific interfaces. Clients should not be forced to depend on methods that they do not use. Because, when a Class is required to perform actions that are not useful, it is wasteful and may produce unexpected bugs if the Class cannot perform those actions. It is advisable for software engineers to start by building a new interface and then let the class implement multiple interfaces as needed, rather than using an existing interface and adding new methods.
 
