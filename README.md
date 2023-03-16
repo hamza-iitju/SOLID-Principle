@@ -714,3 +714,73 @@ class SubType extends SuperType
 	}
 } 
 ```
+
+
+## Interface Segregation
+
+Segregation means keeping things separated, and the Interface Segregation Principle is about separating the interfaces. The principle emphasizes having one general-purpose interface rather than many client-specific interfaces. Clients should not be forced to depend on methods that they do not use. Because, when a Class is required to perform actions that are not useful, it is wasteful and may produce unexpected bugs if the Class cannot perform those actions. It is advisable for software engineers to start by building a new interface and then let the class implement multiple interfaces as needed, rather than using an existing interface and adding new methods.
+
+>For Example
+```php
+<?php
+interface Bird
+{
+	public function speak();
+	public function fly();
+}
+
+class Duck implements Bird
+{
+	public function speak(){
+		return "Duck speaks";
+	}
+	public function fly(){
+		return "Duck flies";
+	}
+}
+class Ostrich implements Bird
+{
+	public function speak(){
+		return "Duck speaks";
+	}
+	public function fly(){
+		// no fly
+	}
+}
+```
+
+Here we can see that ostrich can't fly, and `fly()` method is not needed. But for implementing interface we have to add this method. But this is not usable and that is the violation of this principle.
+
+We can rearrange the **interface** like this:
+```php
+<?php
+interface Speakable
+{
+	public function speak();
+}
+
+interface Flyable
+{
+	public function fly();
+}
+
+class Duck implements Speakable, Flyable
+{
+	public function speak(){
+		return "Duck speaks";
+	}
+	public function fly(){
+		return "Duck flies";
+	}
+}
+class Ostrich implements Speakable
+{
+	public function speak(){
+		return "Duck speaks";
+	}
+}
+```
+
+We can segregate the interface into two interface like `Speakable & Flyable` so that we can use it where it is needed, and no unusable methods are there. We can add more related method into the interface instead of one method.
+
+In real life example, Laravel use multiple interface into the `Model` class that is only for used specific purpose. 
