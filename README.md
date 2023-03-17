@@ -784,3 +784,94 @@ class Ostrich implements Speakable
 We can segregate the interface into two interface like `Speakable & Flyable` so that we can use it where it is needed, and no unusable methods are there. We can add more related method into the interface instead of one method.
 
 In real life example, Laravel use multiple interface into the `Model` class that is only for used specific purpose. 
+
+
+
+## D - Dependency Inversion
+
+Let's understand these terms before getting ahead with the Dependency Inversion Principle:
+
+**High-level Module (or Class):**  Class that executes an action with a tool.
+
+**Low-level Module (or Class):**  The tool that is needed to execute the action.
+
+**Abstraction:**  Represents an interface that connects the two Classes.
+
+**Details:**  How the tool works.  
+
+The Dependency Inversion principle states that our classes should depend upon interfaces or abstract classes instead of concrete classes and functions. This means that developers should depend on abstractions, not on concretions. It also instructs that high-level module should not depend upon low-level modules. And, abstractions should not depend on details, but Details should depend upon abstractions.
+
+> For Example
+```php
+<?php
+class PaymentProcess
+{
+	protected $payment;
+	public function __construct(StripePayment $stripePayment)
+	{
+		$this->payment = $stripePayment;
+	}
+	public function pay()
+	{
+		return "Payment";
+	}
+}
+
+class StripePayment
+{
+	public function makePayment()
+	{
+		// stripe payment config
+	}
+}
+$paymentProcess = new PaymentProcess(new StripePayment());
+$paymentProcess->pay();
+```
+
+In this example, we can see that `PaymentProcess` is the high level module and `StripePayment` is the low level module. So we can't depend on low level module from high level module. This is the violation of this principle.
+If we add another payment method like `PapalPayment` then we can't do `PaypalPayment` from the `PaymentProcess` class because it depends on `StripePayment`. 
+
+If we accept both `PaypalPayment` & `StripePayment` then we have to depend on `PaymentInterface` that is abstraction rather than concrete class from `PaymentProcess`. 
+
+So we can redesign the code like:
+```php
+<?php
+interface PaymentInterface
+{
+	public function makePayment();
+}
+class PaymentProcess
+{
+	protected $payment;
+	public function __construct(PaymentInterface $paymentInterface)
+	{
+		$this->payment = $paymentInterface;
+	}
+	public function pay()
+	{
+		return "Payment";
+	}
+}
+
+class StripePayment implements PaymentInterface
+{
+	public function makePayment()
+	{
+		// stripe payment config
+	}
+}
+
+class PaypalPayment implements PaymentInterface
+{
+	public function makePayment()
+	{
+		// stripe payment config
+	}
+}
+$paymentProcess = new PaymentProcess(
+	new StripePayment()
+	// new PaypalPayment()
+);
+$paymentProcess->pay();
+```
+Now we can use both `StripePayment` & `PaypalPayment` as a dependency injection.
